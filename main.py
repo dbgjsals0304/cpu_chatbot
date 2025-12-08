@@ -239,14 +239,8 @@ def render_war_mode():
         f"""
         <audio id="war_bgm" autoplay>
             <source src="{WAR_BGM_PATH}" type="audio/mpeg">
+            war_bgm.volume = 0.05;
         </audio>
-
-        <script>
-            const bgm = document.getElementById("war_bgm");
-            if (bgm) {{
-                bgm.volume = 0.05;   //
-            }}
-        </script>
         """,
         unsafe_allow_html=True,
     )
