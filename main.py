@@ -195,7 +195,7 @@ with st.sidebar:
 
     # ===== 효과음 넣고 싶으면 여기서 처리하면 좋음 =====
     # 예시)
-     if st.session_state["mode"] == "war":
+    if st.session_state["mode"] == "war":
          st.audio("3.mp3", format="audio/mp3")
     # ===============================================
 
