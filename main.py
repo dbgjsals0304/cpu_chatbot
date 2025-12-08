@@ -234,17 +234,26 @@ def render_war_mode():
 
     # 전쟁 모드로 막 진입했을 때만 BGM 자동 재생
     if st.session_state.get("play_war_bgm", False):
-        # ---- 여기서 WAR_BGM_PATH 를 네 mp3 URL로 바꾸면 됨 ----
+
         st.markdown(
-            f"""
-            <audio autoplay>
-                <source src="{WAR_BGM_PATH}" type="audio/mpeg">
-            </audio>
-            """,
-            unsafe_allow_html=True,
-        )
-        # 한 번 재생 후 플래그 끔
-        st.session_state["play_war_bgm"] = False
+        f"""
+        <audio id="war_bgm" autoplay>
+            <source src="{WAR_BGM_PATH}" type="audio/mpeg">
+        </audio>
+
+        <script>
+            const bgm = document.getElementById("war_bgm");
+            if (bgm) {{
+                bgm.volume = 0.15;   // 🔥 볼륨 조절 (0.0 ~ 1.0) 지금은 15%
+            }}
+        </script>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # 한 번 재생 후 플래그 끔
+    st.session_state["play_war_bgm"] = False
+
 
     messages = st.session_state["war_messages"]
 
