@@ -231,11 +231,11 @@ for msg in messages:
         # ⚠ 아바타 넣고 싶으면 아래 with 에 avatar="이미지경로.png" 추가하면 됨
         if msg["role"] == "user":
             # 예: with st.chat_message("user", avatar="images/general.png"):
-            with st.chat_message("user", avatar="1.png"):
+            with st.chat_message("user", avatar="2.png"):
                 st.markdown(msg["content"])
         else:
             # 예: with st.chat_message("assistant", avatar="images/advisor.png"):
-            with st.chat_message("assistant", avatar="2.png"):
+            with st.chat_message("assistant", avatar="1.png"):
                 st.markdown(msg["content"])
     else:
         # 꼬르륵이 모드는 기본 아바타(별도 이미지 없음)
