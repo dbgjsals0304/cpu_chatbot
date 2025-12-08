@@ -56,6 +56,21 @@ with st.sidebar:
         value=st.session_state["temperature"],
         step=0.1,
     )
+    st.markdown("---")
+    st.subheader("🧠 챗봇 성격")
+
+    st.session_state["system_mode"] = st.selectbox(
+        "역할 선택",
+        list(PROMPT_MAP.keys()),
+        index=list(PROMPT_MAP.keys()).index(st.session_state["system_mode"]),
+    )
+
+    if st.button("대화 초기화"):
+        st.session_state.messages = [
+            {"role": "system", "content": PROMPT_MAP[st.session_state["system_mode"]]}
+        ]
+        st.experimental_rerun()
+
 # ---- 여러 가지 시스템 프롬프트 모드 ----
 
 promport = """역할: 너는 ‘꼬르륵이’라는 이름의 무심하고 시큰둥한 먹보 친구야.  
