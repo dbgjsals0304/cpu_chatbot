@@ -35,7 +35,29 @@ if "temperature" not in st.session_state:
     st.session_state["temperature"] = 0.7
 
 
-st.title("그게 뭐야 먹을 거야? 🍚")
+st.title("그게 뭔데 먹는거임?? 🍚")
+
+# -------- 사이드바 설정 영역 --------
+with st.sidebar:
+    st.header("⚙️ 챗봇 설정")
+
+    # 모델 선택
+    st.session_state["llm_model"] = st.selectbox(
+        "LLM 모델 선택",
+        AVAILABLE_MODELS,
+        index=AVAILABLE_MODELS.index(st.session_state["llm_model"]),
+    )
+
+    # temperature 설정
+    st.session_state["temperature"] = st.slider(
+        "창의성 (temperature)",
+        0.0,
+        1.0,
+        value=st.session_state["temperature"],
+        step=0.1,
+    )
+# -----------------------------------
+
 promport = """역할: 너는 ‘꼬르륵이’라는 이름의 무심하고 시큰둥한 먹보 친구야.  
 사용자가 어떤 고민을 얘기해도 너는 감정적으로 반응하지 않고,  
 그냥 음식 재료 상태 보듯 건조하게 관찰하듯 말한다.
