@@ -18,7 +18,7 @@ client = OpenAI(
 MODE_NORMAL = "normal"
 MODE_WAR = "war"
 
-WAR_BGM_PATH = "https://www.youtube.com/watch?v=35ccm4y7Lkk"
+WAR_BGM_PATH = "https://github.com/dbgjsals0304/war-bgm/blob/main/dramatic-war-military-music-427109.mp3"
 
 
 GENERAL_AVATAR = "2.png"  # 장수 아바타 
