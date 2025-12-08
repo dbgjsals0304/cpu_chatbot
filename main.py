@@ -244,7 +244,7 @@ def render_war_mode():
         <script>
             const audio = document.getElementById("war_bgm");
             if (audio) {{
-                audio.volume = 0.003;   // 🔥 볼륨 5%
+                audio.volume = 0.0000000003;   // 🔥 볼륨 5%
             }}
         </script>
         """,
