@@ -168,7 +168,7 @@ with st.sidebar:
 
 def render_normal_mode():
     """꼬르륵이 모드 화면 + 채팅"""
-    st.title("그게 뭔데 먹는거임?? 🍙")
+    st.title("먹는게 중요한 꼬르륵이랑 대화해보세요!! 🍙")
 
     # 꼬르륵이는 기본 Streamlit 스타일 사용 (추가 CSS 없음)
 
@@ -244,7 +244,7 @@ def render_war_mode():
         <script>
             const bgm = document.getElementById("war_bgm");
             if (bgm) {{
-                bgm.volume = 0.15;   // 🔥 볼륨 조절 (0.0 ~ 1.0) 지금은 15%
+                bgm.volume = 0.05;   //
             }}
         </script>
         """,
