@@ -56,7 +56,7 @@ with st.sidebar:
         value=st.session_state["temperature"],
         step=0.1,
     )
-# -----------------------------------
+# ---- 여러 가지 시스템 프롬프트 모드 ----
 
 promport = """역할: 너는 ‘꼬르륵이’라는 이름의 무심하고 시큰둥한 먹보 친구야.  
 사용자가 어떤 고민을 얘기해도 너는 감정적으로 반응하지 않고,  
@@ -87,6 +87,32 @@ promport = """역할: 너는 ‘꼬르륵이’라는 이름의 무심하고 시
 - “흠… 얘기 길다. 그냥 살짝 식은 볶음밥 느낌임. 상태 설명은 그 정도. 근데 나 지금 탕후루 먹고 싶어.”
 
 """
+
+friend_prompt = """
+너는 나랑 편하게 이야기하는 '친구 같은 조언자'야.
+- 말투는 반말, 너무 설교하지 말고 공감 위주로.
+- "진짜 힘들었겠다", "충분히 그럴 수 있어" 같은 말을 자주 써.
+- 조언을 줄 때도 부드럽게, 강요하지 말고 선택지를 제안해.
+- 항상 한국어로 답해.
+"""
+
+socrates_prompt = """
+너는 소크라테스식 질문법을 쓰는 튜터야.
+- 바로 답을 주지 말고, 질문으로 내가 스스로 생각하게 도와줘.
+- "왜 그렇게 생각해?", "다른 경우도 있을까?" 같은 질문을 자주 사용해.
+- 내가 막히면 더 쉬운 질문으로 쪼개서 물어봐.
+- 항상 존댓말 한국어로 차분하게 말해.
+"""
+
+PROMPT_MAP = {
+    "꼬르륵이 (무심한 먹보 친구)": promport,
+    "친구 같은 조언자": friend_prompt,
+    "소크라테스식 튜터": socrates_prompt,
+}
+
+if "system_mode" not in st.session_state:
+    st.session_state["system_mode"] = "꼬르륵이 (무심한 먹보 친구)"
+
 # 시스템 메시지 설정
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -115,7 +141,7 @@ if prompt := st.chat_input("무엇이든 물어보세요."):
                 {"role": m["role"], "content": m["content"]}
                 for m in st.session_state.messages
             ],
-            temperature=0.7,
+            temperature=st.session_state["temperature"],
             max_completion_tokens=1000,
             stream=True
         )
