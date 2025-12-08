@@ -132,10 +132,11 @@ if "system_mode" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
-            "role": "system", 
-            "content": promport,
+            "role": "system",
+            "content": PROMPT_MAP[st.session_state["system_mode"]],
         }
     ]
+
 
 for message in st.session_state.messages:
     if message["role"] == "system":
@@ -153,9 +154,15 @@ if prompt := st.chat_input("무엇이든 물어보세요."):
         stream = client.chat.completions.create(
             model=st.session_state["llm_model"],
             messages=[
+                # 항상 현재 선택된 시스템 프롬프트를 사용
+                {"role": "system", "content": PROMPT_MAP[st.session_state["system_mode"]]}
+            ] + [
+                # 나머지는 user / assistant 대화만 이어붙이기
                 {"role": m["role"], "content": m["content"]}
                 for m in st.session_state.messages
+                if m["role"] != "system"
             ],
+
             temperature=st.session_state["temperature"],
             max_completion_tokens=1000,
             stream=True
