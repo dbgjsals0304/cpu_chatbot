@@ -18,7 +18,7 @@ client = OpenAI(
 MODE_NORMAL = "normal"
 MODE_WAR = "war"
 
-WAR_BGM_PATH = "3.mp3"
+WAR_BGM_PATH = "https://www.youtube.com/watch?v=35ccm4y7Lkk"
 
 
 GENERAL_AVATAR = "2.png"  # 장수 아바타 
