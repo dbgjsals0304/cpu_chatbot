@@ -4,138 +4,105 @@ from openai import OpenAI
 import streamlit as st
 import os
 
-# ======================================
-# 0. Cerebras(OpenAI 호환) 클라이언트
-# ======================================
+# =========================
+# 0. 공통 설정
+# =========================
+
+# Cerebras API 클라이언트
 client = OpenAI(
     base_url="https://api.cerebras.ai/v1",
     api_key=os.getenv("CEREBRAS_API_KEY"),
 )
 
-# ======================================
-# 1. 시스템 프롬프트들
-# ======================================
+# 모드 상수
+MODE_NORMAL = "normal"
+MODE_WAR = "war"
 
-# (1) 꼬르륵이 – 무심한 먹보 친구
-KOROREUGI_PROMPT = """
-역할: 너는 ‘꼬르륵이’라는 이름의 무심하고 시큰둥한 먹보 친구야.
-사용자가 어떤 고민을 얘기해도 감정적으로 공감하거나 위로하지 않고,
+WAR_BGM_PATH = "3.mp3"
+
+
+GENERAL_AVATAR = "2.png"  # 장수 아바타 
+ADVISOR_AVATAR = "1.png"   # 책사 아바타 
+# -----------------------------------------------
+
+
+# =========================
+# 1. 프롬프트 정의
+# =========================
+
+# 꼬르륵이 – 무심한 먹보 친구
+KORO_PROMPT = """역할: 너는 ‘꼬르륵이’라는 이름의 무심하고 시큰둥한 먹보 친구야.  
+사용자가 어떤 고민을 얘기해도 너는 감정적으로 반응하지 않고,  
 그냥 음식 재료 상태 보듯 건조하게 관찰하듯 말한다.
 
-규칙:
-1) 공감/위로/응원/진지한 조언 금지.
-2) 사용자의 감정이나 상황을 '재료 상태', '익힘 정도', '온도', '맛의 농도'처럼 음식 비유로만 설명.
-3) 말투는 귀찮고 심드렁한 친구 느낌. 반말/반쯤 인터넷 밈 사용 가능.
-4) 대답은 너무 길지 않게 4~7문장 정도.
-5) 마지막 문장은 항상 "아무튼 나는 지금 ○○ 먹고 싶다" 처럼 음식 욕구로 마무리.
-6) 항상 한국어로 답변.
+공감, 위로, 응원, 조언은 절대 하지 않는다.  
+사용자의 감정을 분석하더라도 감정이 아니라  
+‘재료의 상태’, ‘익힘 정도’, ‘온도’, ‘맛의 농도’ 같은  
+음식 정보처럼 냉담하고 무심하게 묘사한다.
 
-예시 말투:
-- "음… 네 상태 약간 덜 발효된 반죽 같네. 뭐 애매하게 끈적한 그런 느낌. 아무튼 나는 지금 물냉면 먹고 싶다."
-- "아 그렇구나. 눅눅해진 과자 봉지 같은 상황임. 특별한 감정은 없고. 그냥 치즈버거 땡긴다."
+입력된 내용에 대해 너는 항상 “아 그래? 근데…” 같은  
+심드렁하고 무관심한 태도를 유지해야 한다.  
+하지만 말을 이어가면서 결국 네 머릿속은 음식 생각뿐이다.
+
+응답 규칙:
+1) 감정 공감 금지.  
+2) 해결책·격려 금지.  
+3) 사용자의 상황을 음식 재료처럼 건조하게 비교 설명하기.  
+4) 말투는 무심하고 귀찮아하는 톤.  
+5) 결론은 항상 “아무튼 나는 지금 ○○ 먹고 싶다” 같은 식의  
+   뜬금없는 음식 욕구로 끝내기.  
+6) 책임감·도움·친절함 없이, 그냥 음식 생각만 하는 스타일.  
+7) 대답은 항상 한국어.
 """
 
-# (2) 전쟁 시뮬레이터 – 장수 & 책사
-WAR_SIM_PROMPT = """
-역할: 너는 전략을 담당하는 책사(군사)이고, 사용자는 장군(지휘관)이다.
-
-세계관:
-- 배경은 가상의 전쟁이지만, 삼국지/판타지 느낌은 최대한 배제하고 현실적인 전투/보급/사기/지형 등을 고려한다.
-- 정확한 연도/나라 설정은 중요하지 않고, '동쪽 적군', '서쪽 요새', '보급로', '정찰대' 같은 수준으로 표현한다.
-
-대화 방식:
-1) 항상 사용자를 "장군님"이라고 부른다.
-2) 각 답변은 아래 3개 섹션으로 구성한다.
-
-[전황 요약]
-- 현재까지의 전투 상황과 큰 흐름을 3~5문장으로 요약.
-
-[아군 / 적군 상황]
-- 아군 병력 상태, 사기, 보급, 지형 이점/불리함 등을 짧게 정리.
-- 적군의 움직임, 의도 추정 등을 2~4문장으로 설명.
-
-[책사의 제안]
-- 지금 시점에서 가능한 전략적 선택지를 2~3개 제시.
-- 각 선택지 마다 간단한 장단점 또는 리스크를 적어준다.
-- “① ~, ② ~, ③ ~” 이런 식으로 번호 매기기.
+# 전쟁 시뮬레이터 – 장수 & 책사
+WAR_PROMPT = """당신은 조용하지만 뛰어난 전략가인 책사입니다.
+사용자는 '장수'이며, 당신에게 전쟁 상황에 대한 보고를 듣고
+전략/전술을 상의합니다.
 
 규칙:
-- 사용자가 명령을 내리면, 그 명령의 결과로 전황이 어떻게 변했는지 이어서 서술한다.
-- 전황은 이전 대화 내용을 기반으로 점점 변화해야 한다. (항상 처음 상태로 리셋 금지)
-- 너무 디테일한 전술 설명보다는, ‘큰 전략 방향’과 ‘결과적인 변화를 느낄 수 있는 묘사’에 집중한다.
-- 장군님이 감정 표현을 하면, 약간의 공감은 하되 기본은 냉정한 전략가 톤으로 유지한다.
-- 항상 한국어로 답변한다.
+1) 사용자를 항상 '장군님'으로 부릅니다.
+2) 사용자가 명령하거나 질문하면, 먼저 지금까지의 전황을 짧게 정리하고,
+   그 명령이 미치는 영향을 서술형으로 설명하세요.
+3) 너무 복잡한 룰 대신, 직관적인 표현을 사용합니다.
+   예: 병력 우세 / 열세, 사기 상승 / 하락, 보급 여유 / 부족 등.
+4) 매 답변의 끝에는,
+   - 지금 전황이 유리한지 / 불리한지 한 줄로 요약합니다.
+   - 장군님이 다음에 고민해 볼 선택지 2~3개를 글머리표로 제안합니다.
+5) 전체 말투는 고전 삼국지 느낌보다는,
+   현대 한국어 존댓말 + 약간 무거운 분위기를 유지합니다.
+6) 항상 한국어로 답변합니다.
 """
 
-# ======================================
-# 2. 기본 설정 & 세션 상태
-# ======================================
 
-DEFAULT_MODEL = "gpt-oss-120b"
+# =========================
+# 2. 세션 상태 초기화
+# =========================
 
 if "mode" not in st.session_state:
-    # "normal" = 꼬르륵이, "war" = 전쟁 시뮬레이터
-    st.session_state["mode"] = "normal"
+    st.session_state["mode"] = MODE_NORMAL  # 기본은 꼬르륵이 모드
 
 if "llm_model" not in st.session_state:
-    st.session_state["llm_model"] = DEFAULT_MODEL
+    st.session_state["llm_model"] = "gpt-oss-120b"
 
 if "temperature" not in st.session_state:
     st.session_state["temperature"] = 0.7
 
-# 모드별 대화 로그 분리
-if "messages_normal" not in st.session_state:
-    st.session_state["messages_normal"] = []
+# 모드별 대화 히스토리
+if "normal_messages" not in st.session_state:
+    st.session_state["normal_messages"] = []
 
-if "messages_war" not in st.session_state:
-    st.session_state["messages_war"] = []
+if "war_messages" not in st.session_state:
+    st.session_state["war_messages"] = []
 
-
-# ======================================
-# 3. 모드별 테마(배경/글자색)
-# ======================================
-
-def apply_theme(mode: str):
-    """모드에 따라 배경/글자 색상 변경"""
-    if mode == "war":
-        # 전쟁 모드: 어두운 붉은 톤 + 밝은 글자
-        css = """
-        <style>
-        [data-testid="stAppViewContainer"] {
-            background: radial-gradient(circle at top, #3b1a1a 0, #150707 55%);
-            color: #f7ebdc;
-        }
-        [data-testid="stSidebar"] {
-            background-color: #201010;
-            color: #f7ebdc;
-        }
-        .war-caption {
-            color: #f5d7b0;
-            font-size: 0.95rem;
-        }
-        </style>
-        """
-    else:
-        # 꼬르륵이 모드: 기본에 가까운 밝은 배경
-        css = """
-        <style>
-        [data-testid="stAppViewContainer"] {
-            background-color: #fafafa;
-            color: #222222;
-        }
-        [data-testid="stSidebar"] {
-            background-color: #ffffff;
-        }
-        </style>
-        """
-    st.markdown(css, unsafe_allow_html=True)
+# 전쟁 모드 진입 시 BGM 재생 플래그
+if "play_war_bgm" not in st.session_state:
+    st.session_state["play_war_bgm"] = False
 
 
-apply_theme(st.session_state["mode"])
-
-# ======================================
-# 4. 사이드바 UI (모드 전환 + 설정)
-# ======================================
+# =========================
+# 3. 사이드바 (모드 전환 + 공통 설정)
+# =========================
 
 with st.sidebar:
     st.header("설정 & 모드 전환")
@@ -143,126 +110,90 @@ with st.sidebar:
     st.subheader("🎮 모드 전환")
     col1, col2 = st.columns(2)
 
+    # 꼬르륵이 모드 버튼
     with col1:
         if st.button("🍚 꼬르륵이 모드", use_container_width=True):
-            st.session_state["mode"] = "normal"
+            st.session_state["mode"] = MODE_NORMAL
+            st.session_state["play_war_bgm"] = False  # 전쟁음악 끔
 
+    # 전쟁 시뮬레이터 모드 버튼
     with col2:
         if st.button("⚔️ 전쟁 시뮬레이터", use_container_width=True):
-            st.session_state["mode"] = "war"
+            # 평화 → 전쟁 으로 바꿀 때만 BGM 재생
+            if st.session_state["mode"] != MODE_WAR:
+                st.session_state["play_war_bgm"] = True
+            st.session_state["mode"] = MODE_WAR
 
-    current_mode_label = "꼬르륵이의 평화로운 일상" \
-        if st.session_state["mode"] == "normal" else "전쟁 시뮬레이터 (장수 & 책사)"
-    st.caption(f"현재 모드: **{current_mode_label}**")
+    st.markdown("---")
 
-    st.divider()
+    # 공통 LLM 설정
     st.subheader("LLM 설정")
 
-    model_options = [
-        "gpt-oss-120b",
-        "llama-3.3-70b",
-        "llama3.1-8b",
-        "qwen-3-32b",
-    ]
-    try:
-        default_index = model_options.index(st.session_state["llm_model"])
-    except ValueError:
-        default_index = 0
-
-    selected_model = st.selectbox(
+    model_name = st.selectbox(
         "LLM 모델 선택",
-        model_options,
-        index=default_index,
+        [
+            "gpt-oss-120b",
+            "llama-3.3-70b",
+            "llama3.1-8b",
+            "qwen-3-32b",
+        ],
+        index=0,
     )
-    st.session_state["llm_model"] = selected_model
+    st.session_state["llm_model"] = model_name
 
-    temp = st.slider(
+    temperature = st.slider(
         "창의성 (temperature)",
         min_value=0.0,
         max_value=1.0,
         value=st.session_state["temperature"],
         step=0.05,
     )
-    st.session_state["temperature"] = temp
+    st.session_state["temperature"] = temperature
 
-    st.divider()
-    if st.button("🧹 현재 모드 대화 지우기", use_container_width=True):
-        if st.session_state["mode"] == "normal":
-            st.session_state["messages_normal"] = []
+    st.markdown("---")
+
+    # 현재 모드 대화만 지우기
+    if st.button("🧼 현재 모드 대화 지우기", use_container_width=True):
+        if st.session_state["mode"] == MODE_NORMAL:
+            st.session_state["normal_messages"] = []
         else:
-            st.session_state["messages_war"] = []
-        st.success("현재 모드의 대화를 모두 초기화했어요!")
-
-    # ===== 효과음 넣고 싶으면 여기서 처리하면 좋음 =====
-    # 예시)
-    if st.session_state["mode"] == "war":
-         st.audio("3.mp3", format="audio/mp3")
-    # ===============================================
+            st.session_state["war_messages"] = []
+        st.success("현재 모드 대화를 모두 지웠어요!")
 
 
-# ======================================
-# 5. 메인 화면 / 채팅 UI
-# ======================================
+# =========================
+# 4. 모드별 화면 렌더링
+# =========================
 
-mode = st.session_state["mode"]
+def render_normal_mode():
+    """꼬르륵이 모드 화면 + 채팅"""
+    st.title("그게 뭔데 먹는거임?? 🍙")
 
-if mode == "normal":
-    st.title("🍜 평화로운 꼬르륵이의 일상")
-    st.caption("무심한 먹보 친구 ‘꼬르륵이’에게 아무 말이나 던져보세요.")
-    system_prompt = KOROREUGI_PROMPT
-    messages_key = "messages_normal"
-    chat_placeholder = "오늘 있었던 일이나 고민, 아무 말이나 적어봐…"
-else:
-    st.title("⚔️ 전쟁 시뮬레이터 - 장수와 책사")
-    st.markdown(
-        '<p class="war-caption">너는 장수, 챗봇은 책사야. '
-        '네 명령과 선택에 따라 전황이 조금씩 달라질 거야.</p>',
-        unsafe_allow_html=True,
-    )
-    system_prompt = WAR_SIM_PROMPT
-    messages_key = "messages_war"
-    chat_placeholder = "장군님, 책사에게 전략을 물어보거나 명령을 내려보세요..."
+    # 꼬르륵이는 기본 Streamlit 스타일 사용 (추가 CSS 없음)
 
-messages = st.session_state[messages_key]
+    messages = st.session_state["normal_messages"]
 
-# 지금까지 대화 출력
-for msg in messages:
-    if mode == "war":
-        # ⚠ 아바타 넣고 싶으면 아래 with 에 avatar="이미지경로.png" 추가하면 됨
-        if msg["role"] == "user":
-            # 예: with st.chat_message("user", avatar="images/general.png"):
-            with st.chat_message("user", avatar="2.png"):
-                st.markdown(msg["content"])
-        else:
-            # 예: with st.chat_message("assistant", avatar="images/advisor.png"):
-            with st.chat_message("assistant", avatar="1.png"):
-                st.markdown(msg["content"])
-    else:
-        # 꼬르륵이 모드는 기본 아바타(별도 이미지 없음)
+    # 지난 대화 출력
+    for msg in messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-# 사용자 입력
-user_input = st.chat_input(chat_placeholder)
+    # 입력창
+    user_input = st.chat_input("꼬르륵이에게 아무 말이나 털어놔봐...")
 
-if user_input:
-    # 1) 사용자 메시지 출력 + 저장
-    if mode == "war":
-        with st.chat_message("user"):
-            st.markdown(user_input)
-    else:
-        with st.chat_message("user"):
-            st.markdown(user_input)
+    if not user_input:
+        return
 
+    # 사용자 메시지 출력 + 저장
+    with st.chat_message("user"):
+        st.markdown(user_input)
     messages.append({"role": "user", "content": user_input})
-    st.session_state[messages_key] = messages
 
-    # 2) 모델에게 보낼 메시지 구성 (system + history)
-    messages_for_model = [{"role": "system", "content": system_prompt}] + [
-        {"role": m["role"], "content": m["content"]} for m in messages
-    ]
+    # 모델에게 보낼 메시지 구성
+    system_prompt = KORO_PROMPT
+    messages_for_model = [{"role": "system", "content": system_prompt}] + messages
 
-    # 3) LLM 호출
+    # 모델 호출
     with st.chat_message("assistant"):
         stream = client.chat.completions.create(
             model=st.session_state["llm_model"],
@@ -273,16 +204,108 @@ if user_input:
         )
         response_text = st.write_stream(stream)
 
-    # 4) 응답 저장
     messages.append({"role": "assistant", "content": response_text})
-    st.session_state[messages_key] = messages
+    st.session_state["normal_messages"] = messages
 
 
-# ======================================
-# 6. 로컬 실행용 (선택)
-# ======================================
+def render_war_mode():
+    """전쟁 시뮬레이터 모드 화면 + 채팅"""
+
+    # 배경 / 글자색 변경 (전쟁 분위기)
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background: radial-gradient(circle at top, #3b0000 0, #050000 55%, #000000 100%);
+            color: #f8f3e8;
+        }
+        .stMarkdown, .stTextInput > div > div > input, .stSlider label, .stChatMessage {
+            color: #f8f3e8 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.title("⚔️ 전쟁 시뮬레이터 - 장수와 책사")
+
+    st.caption("너는 장수, 챗봇은 책사. 네 명령에 따라 전황이 달라진다...")
+
+    # 전쟁 모드로 막 진입했을 때만 BGM 자동 재생
+    if st.session_state.get("play_war_bgm", False):
+        # ---- 여기서 WAR_BGM_PATH 를 네 mp3 URL로 바꾸면 됨 ----
+        st.markdown(
+            f"""
+            <audio autoplay>
+                <source src="{WAR_BGM_PATH}" type="audio/mpeg">
+            </audio>
+            """,
+            unsafe_allow_html=True,
+        )
+        # 한 번 재생 후 플래그 끔
+        st.session_state["play_war_bgm"] = False
+
+    messages = st.session_state["war_messages"]
+
+    # 간단한 전황 안내 (턴 수 정도만)
+    turn = 1 + sum(1 for m in messages if m["role"] == "user")
+    st.markdown(f"**현재 턴:** {turn}턴")
+
+    # 지난 대화 출력 (장수/책사 아바타 사용)
+    for msg in messages:
+        if msg["role"] == "user":
+            with st.chat_message("user", avatar=GENERAL_AVATAR):
+                st.markdown(msg["content"])
+        else:
+            with st.chat_message("assistant", avatar=ADVISOR_AVATAR):
+                st.markdown(msg["content"])
+
+    # 입력창
+    user_input = st.chat_input("장수님, 책사에게 전략을 물어보거나 명령을 내려보세요...")
+
+    if not user_input:
+        return
+
+    # 사용자 메시지 출력 + 저장
+    with st.chat_message("user", avatar=GENERAL_AVATAR):
+        st.markdown(user_input)
+    messages.append({"role": "user", "content": user_input})
+
+    # 모델에게 보낼 메시지 구성
+    system_prompt = WAR_PROMPT
+    messages_for_model = [{"role": "system", "content": system_prompt}] + messages
+
+    # 모델 호출
+    with st.chat_message("assistant", avatar=ADVISOR_AVATAR):
+        stream = client.chat.completions.create(
+            model=st.session_state["llm_model"],
+            messages=messages_for_model,
+            temperature=st.session_state["temperature"],
+            max_completion_tokens=1000,
+            stream=True,
+        )
+        response_text = st.write_stream(stream)
+
+    messages.append({"role": "assistant", "content": response_text})
+    st.session_state["war_messages"] = messages
+
+
+# =========================
+# 5. 모드에 따라 분기 실행
+# =========================
+
+if st.session_state["mode"] == MODE_WAR:
+    render_war_mode()
+else:
+    render_normal_mode()
+
+
+# =========================
+# 6. (선택) 로컬 실행용 코드
+# =========================
+
 if __name__ == "__main__":
-    # 로컬에서 python main.py 로 실행했을 때
+    # streamlit run main.py 로 돌릴 땐 무시됨
     import subprocess
     import sys
 
