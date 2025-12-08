@@ -3,10 +3,9 @@
 from openai import OpenAI
 import streamlit as st
 import os
+import streamlit.components.v1 as components
 
-# =========================
-# 0. 공통 설정
-# =========================
+
 
 # Cerebras API 클라이언트
 client = OpenAI(
@@ -232,27 +231,23 @@ def render_war_mode():
 
     st.caption("너는 장수, 챗봇은 책사. 네 명령에 따라 전황이 달라진다...")
 
-    # 전쟁 모드로 막 진입했을 때만 BGM 자동 재생
+
+        # 전쟁 모드로 막 진입했을 때만 BGM 자동 재생
     if st.session_state.get("play_war_bgm", False):
 
         st.markdown(
         f"""
         <audio id="war_bgm" autoplay>
             <source src="{WAR_BGM_PATH}" type="audio/mpeg">
+            war_bgm.volume = 0.05;
         </audio>
-
-        <script>
-            const audio = document.getElementById("war_bgm");
-            if (audio) {{
-                audio.volume = 0.0000000003;   // 🔥 볼륨 5%
-            }}
-        </script>
         """,
         unsafe_allow_html=True,
     )
 
     # 한 번 재생 후 플래그 끔
     st.session_state["play_war_bgm"] = False
+
 
 
 
