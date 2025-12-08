@@ -239,14 +239,21 @@ def render_war_mode():
         f"""
         <audio id="war_bgm" autoplay>
             <source src="{WAR_BGM_PATH}" type="audio/mpeg">
-            war_bgm.volume = 0.05;
         </audio>
+
+        <script>
+            const audio = document.getElementById("war_bgm");
+            if (audio) {{
+                audio.volume = 0.05;   // 🔥 볼륨 5%
+            }}
+        </script>
         """,
         unsafe_allow_html=True,
     )
 
     # 한 번 재생 후 플래그 끔
     st.session_state["play_war_bgm"] = False
+
 
 
     messages = st.session_state["war_messages"]
